@@ -1027,6 +1027,183 @@
 
     <!-- Script halaman turunan -->
 
+<!-- Script Navigasi AJAX Sidebar (Tanpa Reload Halaman) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentContainer = document.querySelector('.admin-content');
+            const navbarTitleEl = document.querySelector('.admin-navbar h6');
+            const sidebarLinks = document.querySelectorAll('.sidebar-menu .sidebar-link');
+
+            function updateActiveSidebar(targetUrl) {
+                const targetPath = new URL(targetUrl, window.location.origin).pathname;
+                sidebarLinks.forEach(link => {
+                    const linkPath = new URL(link.href, window.location.origin).pathname;
+                    if (targetPath === linkPath || (linkPath !== '/admin/dashboard' && targetPath.startsWith(linkPath))) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            }
+
+            async function loadAdminPage(url, pushHistory = true) {
+                try {
+                    contentContainer.style.opacity = '0.45';
+                    contentContainer.style.pointerEvents = 'none';
+
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (response.redirected && response.url.includes('/login')) {
+                        window.location.href = response.url;
+                        return;
+                    }
+
+                    const htmlString = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlString, 'text/html');
+
+                    const newContent = doc.querySelector('.admin-content');
+                    const newNavbarTitle = doc.querySelector('.admin-navbar h6');
+
+                    if (!newContent) {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    // 1. Bersihkan backdrop modal Bootstrap yang mungkin masih tertinggal
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    document.body.style.removeProperty('padding-right');
+
+                    // 2. Ganti konten utama
+                    contentContainer.innerHTML = newContent.innerHTML;
+
+                    // 3. Perbarui judul tab & navbar
+                    document.title = doc.title;
+                    if (navbarTitleEl && newNavbarTitle) {
+                        navbarTitleEl.textContent = newNavbarTitle.textContent;
+                    }
+
+                    // 4. Sinkronkan CSS khusus halaman tujuan (@push('styles'))
+                    document.querySelectorAll('style[data-ajax-page-style]').forEach(el => el.remove());
+                    doc.querySelectorAll('head style').forEach((styleTag, index) => {
+                        if (index > 0) {
+                            const clonedStyle = document.createElement('style');
+                            clonedStyle.setAttribute('data-ajax-page-style', 'true');
+                            clonedStyle.textContent = styleTag.textContent;
+                            document.head.appendChild(clonedStyle);
+                        }
+                    });
+
+                    // 5. Jalankan ulang script halaman tujuan (baik inline maupun eksternal seperti admin-crud.js)
+                    document.querySelectorAll('script[data-ajax-page-script]').forEach(el => el.remove());
+                    const allScripts = Array.from(doc.querySelectorAll('script'));
+
+                    for (const oldScript of allScripts) {
+                        // Lewati script milik layout utama
+                        if (oldScript.src && oldScript.src.includes('bootstrap.bundle')) continue;
+                        if (oldScript.textContent.includes('loadAdminPage')) continue;
+
+                        let scriptCode = '';
+
+                        if (oldScript.src) {
+                            // Ambil isi file JS eksternal (misal: admin-crud.js) agar bisa diisolasi & auto-init
+                            try {
+                                const jsRes = await fetch(oldScript.src);
+                                scriptCode = await jsRes.text();
+                            } catch (e) {
+                                console.error('Gagal memuat script eksternal:', oldScript.src, e);
+                                continue;
+                            }
+                        } else {
+                            scriptCode = oldScript.textContent;
+                        }
+
+                        // Lewati jika hanya komentar kosong
+                        if (!scriptCode.trim()) continue;
+
+                        const newScript = document.createElement('script');
+                        newScript.setAttribute('data-ajax-page-script', 'true');
+                        newScript.textContent = `
+                            (function() {
+                                const domReadyCallbacks = [];
+                                const origDocAddEvent = document.addEventListener.bind(document);
+                                const origWinAddEvent = window.addEventListener.bind(window);
+
+                                document.addEventListener = function(type, listener, options) {
+                                    if (type === 'DOMContentLoaded') {
+                                        domReadyCallbacks.push(listener);
+                                    } else {
+                                        origDocAddEvent(type, listener, options);
+                                    }
+                                };
+
+                                window.addEventListener = function(type, listener, options) {
+                                    if (type === 'load') {
+                                        domReadyCallbacks.push(listener);
+                                    } else {
+                                        origWinAddEvent(type, listener, options);
+                                    }
+                                };
+
+                                try {
+                                    ${scriptCode}
+                                    domReadyCallbacks.forEach(fn => {
+                                        try { fn(); } catch (err) { console.error('Page init error:', err); }
+                                    });
+                                } catch (scriptErr) {
+                                    console.error('AJAX page script error:', scriptErr);
+                                } finally {
+                                    document.addEventListener = origDocAddEvent;
+                                    window.addEventListener = origWinAddEvent;
+                                }
+                            })();
+                        `;
+                        document.body.appendChild(newScript);
+                    }
+
+                    // 6. Update URL & status active di sidebar
+                    if (pushHistory) {
+                        window.history.pushState({ url: url }, '', url);
+                    }
+                    updateActiveSidebar(url);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    const sidebarEl = document.getElementById('adminSidebar');
+                    const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
+                    if (bsOffcanvas) {
+                        bsOffcanvas.hide();
+                    }
+
+                } catch (error) {
+                    console.error('Gagal memuat halaman via AJAX:', error);
+                    window.location.href = url;
+                } finally {
+                    contentContainer.style.opacity = '1';
+                    contentContainer.style.pointerEvents = 'auto';
+                }
+            }
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                    e.preventDefault();
+                    const targetUrl = this.href;
+                    if (targetUrl === window.location.href) return;
+                    loadAdminPage(targetUrl, true);
+                });
+            });
+
+            window.addEventListener('popstate', () => {
+                loadAdminPage(window.location.href, false);
+            });
+        });
+    </script>
     @stack('scripts')
 
 
