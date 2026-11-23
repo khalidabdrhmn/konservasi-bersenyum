@@ -13,6 +13,10 @@ class DatabaseSeeder extends Seeder
             OrganizationProfileSeeder::class,
             ProgramSeeder::class,
             GallerySeeder::class,
+            ManagementPeriodSeeder::class,
+            DivisionSeeder::class,
+            MemberSeeder::class,
+            PostSeeder::class,
         ]);
     }
 }

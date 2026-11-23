@@ -734,6 +734,54 @@
 
                 <span>Galeri</span>
             </a>
+            <!-- PERIODE KEPENGURUSAN -->
+
+            <a
+                href="{{ route('admin.management-periods.index') }}"
+                class="sidebar-link {{ request()->routeIs('admin.management-periods.*') ? 'active' : '' }}"
+            >
+
+                <i class="bi bi-calendar-range"></i>
+
+                <span>Periode Kepengurusan</span>
+
+            </a>
+            <!-- DIVISI -->
+
+            <a
+                href="{{ route('admin.divisions.index') }}"
+                class="sidebar-link {{ request()->routeIs('admin.divisions.*') ? 'active' : '' }}"
+            >
+
+                <i class="bi bi-layout-sidebar"></i>
+
+                <span>Divisi</span>
+
+            </a>
+            <!-- ANGGOTA KEPEENGURUSAN -->
+
+            <a
+                href="{{ route('admin.members.index') }}"
+                class="sidebar-link {{ request()->routeIs('admin.members.*') ? 'active' : '' }}"
+            >
+
+                <i class="bi bi-people"></i>
+
+                <span>Anggota Kepengurusan</span>
+
+            </a>
+            <!-- BERITA -->
+
+            <a
+                href="{{ route('admin.posts.index') }}"
+                class="sidebar-link {{ request()->routeIs('admin.posts.*') ? 'active' : '' }}"
+            >
+
+                <i class="bi bi-journal-text"></i>
+
+                <span>Berita &amp; Artikel</span>
+
+            </a>
             <!-- PROFIL ORGANISASI -->
 
             <a
