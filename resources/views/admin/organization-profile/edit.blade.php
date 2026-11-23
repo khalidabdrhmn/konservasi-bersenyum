@@ -362,9 +362,34 @@
                 `;
 
                 if (data.images) {
-                    if (data.images.logo_path) document.getElementById('preview_logo_path').src = data.images.logo_path;
-                    if (data.images.hero_image) document.getElementById('preview_hero_image').src = data.images.hero_image;
-                    if (data.images.about_image) document.getElementById('preview_about_image').src = data.images.about_image;
+                    const timestamp = new Date().getTime();
+
+                    if (data.images.logo_path) {
+                        const newLogoUrl = `${data.images.logo_path}?t=${timestamp}`;
+                        
+                        // 1. Update preview logo di dalam form
+                        document.getElementById('preview_logo_path').src = newLogoUrl;
+
+                        // 2. Update logo di sidebar admin (jika sudah menggunakan <img>)
+                        const sidebarLogoImg = document.querySelector('.admin-org-logo');
+                        if (sidebarLogoImg) {
+                            sidebarLogoImg.src = newLogoUrl;
+                        }
+
+                        // 3. Update favicon pada tab browser
+                        const favicon = document.querySelector('link[rel="icon"]');
+                        if (favicon) {
+                            favicon.href = newLogoUrl;
+                        }
+                    }
+
+                    if (data.images.hero_image) {
+                        document.getElementById('preview_hero_image').src = `${data.images.hero_image}?t=${timestamp}`;
+                    }
+
+                    if (data.images.about_image) {
+                        document.getElementById('preview_about_image').src = `${data.images.about_image}?t=${timestamp}`;
+                    }
                 }
 
                 form.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
