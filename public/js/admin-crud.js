@@ -1,3 +1,5 @@
+import { formatAdminDate } from './admin-date.js';
+
 (() => {
     const page = location.pathname.split('/').filter(Boolean).pop();
     const definitions = {
@@ -59,7 +61,10 @@
             const pagination = result.pagination;
             byId(config.table).innerHTML = items.length ? items.map((item, index) => config.row(item, (pagination.current_page - 1) * pagination.per_page + index + 1)).join('') : `<tr><td colspan="6" class="text-center py-5 text-secondary">Belum ada data.</td></tr>`;
             renderPagination(pagination);
-        } catch (error) { show(error.message, 'danger'); }
+        } catch (error) {
+            byId(config.table).innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">${escapeHtml(error.message || 'Gagal memuat data.')}</td></tr>`;
+            show(error.message, 'danger');
+        }
     }
 
     function openCreate() { reset(); modal.show(); }
@@ -126,7 +131,7 @@
     function preview(id, src) { const image = byId(id); if (!image) return; image.src = src || ''; image.style.display = src ? 'block' : 'none'; }
     function actions(id) { return `<td><div class="d-flex gap-2"><button class="action-btn edit-btn" data-action="edit" data-id="${id}" title="Edit"><i class="bi bi-pencil"></i></button><button class="action-btn delete-btn" data-action="delete" data-id="${id}" title="Hapus"><i class="bi bi-trash"></i></button></div></td>`; }
     function byId(id) { return document.getElementById(id); }
-    function date(value) { return value ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(`${value}T00:00:00`)) : '-'; }
+    const date = formatAdminDate;
     function escapeHtml(value) { const node = document.createElement('span'); node.textContent = value ?? ''; return node.innerHTML; }
     function escapeAttribute(value) { return escapeHtml(value).replace(/`/g, '&#96;'); }
     function debounce(callback, delay) { let timer; return () => { clearTimeout(timer); timer = setTimeout(callback, delay); }; }
