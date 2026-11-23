@@ -623,5 +623,5 @@
     }
 */
 </script>
-<script src="{{ asset('js/admin-crud.js') }}"></script>
+<script type="module" src="{{ asset('js/admin-crud.js') }}"></script>
 @endpush

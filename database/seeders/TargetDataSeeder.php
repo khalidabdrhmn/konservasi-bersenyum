@@ -15,9 +15,20 @@ class TargetDataSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (ManagementPeriod::whereNull('slug')->orWhereNull('status')->get() as $period) {
-            $period->slug = $period->slug ?: Str::slug($period->name) ?: 'periode-'.$period->id;
-            $period->status = $period->status ?: ($period->is_active ? 'active' : 'draft');
+        $usedSlugs = [];
+        foreach (ManagementPeriod::withTrashed()->orderBy('id')->get() as $period) {
+            $base = Str::slug($period->name) ?: 'periode-'.$period->id;
+            $slug = $period->slug ?: $base;
+            $counter = 2;
+            while (isset($usedSlugs[$slug]) || ManagementPeriod::withTrashed()
+                ->where('id', '!=', $period->id)
+                ->where('slug', $slug)
+                ->exists()) {
+                $slug = $base.'-'.$counter++;
+            }
+            $usedSlugs[$slug] = true;
+            $period->slug = $slug;
+            $period->status = $period->is_active ? 'active' : ($period->status ?: 'draft');
             $period->save();
         }
 
