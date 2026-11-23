@@ -7,7 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    @php
+        $orgProfile = \App\Models\OrganizationProfile::first();
+        $faviconUrl = ($orgProfile && $orgProfile->logo_path)
+            ? asset('storage/' . $orgProfile->logo_path)
+            : asset('images/images/logo.png');
+    @endphp
 
+    <link rel="icon" href="{{ $faviconUrl }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     <title>@yield('title', 'Dashboard') | Konservasi Bersenyum</title>
 
     <!-- Bootstrap 5 -->
@@ -658,9 +667,17 @@
                 class="sidebar-brand"
             >
 
-                <div class="sidebar-logo">
-                    K
-                </div>
+                @if($orgProfile && $orgProfile->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $orgProfile->logo_path) }}"
+                        alt="Logo"
+                        class="admin-org-logo"
+                        style="width: 45px; height: 45px; object-fit: cover; border-radius: 11px; background: #fff; flex-shrink: 0;">
+                @else
+                    <div class="sidebar-logo admin-org-logo-fallback">
+                        K
+                    </div>
+                @endif
 
                 <strong id="sidebarLabel">
                     KONSERVASI<br>
