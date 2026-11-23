@@ -135,10 +135,6 @@ class GalleryController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        if ($newImage) {
-            Storage::disk('public')->delete($oldImage);
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Data galeri berhasil diperbarui.',
@@ -148,8 +144,6 @@ class GalleryController extends Controller
     // Menghapus galeri
     public function destroy(Gallery $gallery)
     {
-        Storage::disk('public')->delete($gallery->image);
-
         $gallery->delete();
 
         return response()->json([

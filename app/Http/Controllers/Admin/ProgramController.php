@@ -207,12 +207,6 @@ class ProgramController extends Controller
         // Ganti gambar lama jika ada gambar baru
         if ($request->hasFile('image')) {
 
-            if ($program->image) {
-
-                Storage::disk('public')->delete($program->image);
-
-            }
-
             $validated['image'] = $request
                 ->file('image')
                 ->store('programs', 'public');
@@ -250,13 +244,6 @@ class ProgramController extends Controller
      */
     public function destroy(Program $program)
     {
-        // Hapus gambar dari storage
-        if ($program->image) {
-
-            Storage::disk('public')->delete($program->image);
-
-        }
-
         $program->delete();
 
         return response()->json([

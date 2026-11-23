@@ -228,8 +228,6 @@
     </style>
 
     @stack('styles')
-     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>
         @yield('title', 'Konservasi Bersenyum | Universitas Negeri Semarang')
@@ -313,6 +311,20 @@
                         Galeri
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('frontend.kepengurusan*') ? 'active' : '' }}"
+                       href="{{ route('frontend.kepengurusan') }}">
+                        Kepengurusan
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('frontend.posts*') ? 'active' : '' }}"
+                       href="{{ route('frontend.posts') }}">
+                        Berita
+                    </a>
+                </li>
             </ul>
 
         </div>
@@ -346,6 +358,8 @@
                 <p><a href="{{ route('frontend.about') }}">Tentang Kami</a></p>
                 <p><a href="{{ route('frontend.programs') }}">Program</a></p>
                 <p><a href="{{ route('frontend.galleries') }}">Galeri</a></p>
+                <p><a href="{{ route('frontend.kepengurusan') }}">Kepengurusan</a></p>
+                <p><a href="{{ route('frontend.posts') }}">Berita</a></p>
             </div>
 
             <div class="col-md-4">
@@ -379,7 +393,7 @@
         <hr class="border-light opacity-25">
 
         <div class="text-center small text-white-50">
-            © {{ date('Y') }} Konservasi Bersenyum. All Rights Reserved.
+            &copy; {{ date('Y') }} Konservasi Bersenyum. All Rights Reserved.
         </div>
 
     </div>
