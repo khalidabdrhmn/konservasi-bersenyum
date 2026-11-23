@@ -136,12 +136,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 
     // Profil Organisasi
+ // Profil Organisasi
     Route::get('/organization-profile', [
         \App\Http\Controllers\Admin\OrganizationProfileController::class,
         'edit'
     ])->name('organization-profile.edit');
 
-    Route::put('/organization-profile', [
+    Route::match(['put', 'post'], '/organization-profile', [
         \App\Http\Controllers\Admin\OrganizationProfileController::class,
         'update'
     ])->name('organization-profile.update');

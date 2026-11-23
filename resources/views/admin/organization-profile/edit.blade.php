@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Profil Organisasi | Konservasi Bersenyum')
+@section('title', 'Profil Organisasi')
 @section('navbar-title', 'Profil Organisasi')
 
 @push('styles')
 <style>
     .image-preview {
-        width: 120px;
-        height: 120px;
+        width: 100%;
+        height: 140px;
         object-fit: cover;
         border-radius: 10px;
         border: 2px solid #eee;
@@ -35,17 +35,6 @@
         display: none;
     }
 
-    .remove-image {
-        color: var(--text-muted);
-        font-size: 12px;
-        cursor: pointer;
-        text-decoration: underline;
-    }
-
-    .remove-image:hover {
-        color: var(--maroon-dark);
-    }
-
     .form-section {
         background: white;
         border: 1px solid #eeeeee;
@@ -66,28 +55,20 @@
 
     .image-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 16px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
 
     .image-item {
         border: 1px solid #eee;
         border-radius: 10px;
-        padding: 12px;
+        padding: 16px;
         background: #f8f7f4;
         text-align: center;
     }
 
-    .image-item img {
-        width: 100%;
-        height: 120px;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-
-    .image-item label {
+    .image-item .caption-label {
         display: block;
         font-size: 12px;
         color: #666;
@@ -106,28 +87,12 @@
         </p>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+    <div id="ajax-alert-container"></div>
 
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <form action="{{ route('admin.organization-profile.update') }}" method="POST"
+    <form id="organization-profile-form" action="{{ route('admin.organization-profile.update') }}" method="POST"
           enctype="multipart/form-data">
         @csrf
-        @method('PUT')
+
         <!-- IDENTITAS ORGANISASI -->
         <div class="form-section">
             <h5 class="form-section-title">
@@ -150,27 +115,22 @@
                 <div class="col-12">
                     <label class="form-label fw-semibold">Logo Organisasi</label>
                     <div class="image-grid">
-                        @if($profile?->logo_path)
-                            <div class="image-item">
-                                <img src="{{ asset('storage/'.$profile->logo_path) }}" alt="Logo"
-                                     class="image-preview">
-                                <label>Logo Saat Ini</label>
-                                <input type="file" name="logo_path" class="file-input mt-2"
-                                       accept="image/*">
-                                <small class="remove-image d-block mt-2">Ganti gambar</small>
-                            </div>
-                        @else
-                            <div class="image-item">
-                                <label>Unggah Logo</label>
-                                <input type="file" name="logo_path" class="file-input mt-2"
-                                       accept="image/*">
-                                <label class="file-input-label mt-2 d-inline-block">Pilih File Logo</label>
-                            </div>
-                        @endif
+                        <div class="image-item">
+                            <img id="preview_logo_path"
+                                 src="{{ $profile?->logo_path ? asset('storage/'.$profile->logo_path) : 'https://placehold.co/300x150?text=Belum+Ada+Logo' }}"
+                                 alt="Logo" class="image-preview">
+                            <span class="caption-label">{{ $profile?->logo_path ? 'Logo Saat Ini' : 'Unggah Logo' }}</span>
+                            <input type="file" id="input_logo_path" name="logo_path" class="file-input"
+                                   accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewImage(this, 'preview_logo_path')">
+                            <label for="input_logo_path" class="file-input-label mt-1">
+                                {{ $profile?->logo_path ? 'Ganti Logo' : 'Pilih File Logo' }}
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- HALAMAN BERANDA (HERO) -->
         <div class="form-section">
             <h5 class="form-section-title">
@@ -193,27 +153,22 @@
                 <div class="col-12">
                     <label class="form-label fw-semibold">Gambar Hero</label>
                     <div class="image-grid">
-                        @if($profile?->hero_image)
-                            <div class="image-item">
-                                <img src="{{ asset('storage/'.$profile->hero_image) }}" alt="Hero"
-                                     class="image-preview">
-                                <label>Gambar Hero Saat Ini</label>
-                                <input type="file" name="hero_image" class="file-input mt-2"
-                                       accept="image/*">
-                                <small class="remove-image d-block mt-2">Ganti gambar</small>
-                            </div>
-                        @else
-                            <div class="image-item">
-                                <label>Unggah Gambar Hero</label>
-                                <input type="file" name="hero_image" class="file-input mt-2"
-                                       accept="image/*">
-                                <label class="file-input-label mt-2 d-inline-block">Pilih File Gambar</label>
-                            </div>
-                        @endif
+                        <div class="image-item">
+                            <img id="preview_hero_image"
+                                 src="{{ $profile?->hero_image ? asset('storage/'.$profile->hero_image) : 'https://placehold.co/300x150?text=Belum+Ada+Gambar' }}"
+                                 alt="Hero" class="image-preview">
+                            <span class="caption-label">{{ $profile?->hero_image ? 'Gambar Hero Saat Ini' : 'Unggah Gambar Hero' }}</span>
+                            <input type="file" id="input_hero_image" name="hero_image" class="file-input"
+                                   accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewImage(this, 'preview_hero_image')">
+                            <label for="input_hero_image" class="file-input-label mt-1">
+                                {{ $profile?->hero_image ? 'Ganti Gambar' : 'Pilih File Gambar' }}
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- HALAMAN TENTANG KAMI -->
         <div class="form-section">
             <h5 class="form-section-title">
@@ -236,27 +191,22 @@
                 <div class="col-12">
                     <label class="form-label fw-semibold">Gambar Tentang Kami</label>
                     <div class="image-grid">
-                        @if($profile?->about_image)
-                            <div class="image-item">
-                                <img src="{{ asset('storage/'.$profile->about_image) }}" alt="About"
-                                     class="image-preview">
-                                <label>Gambar About Saat Ini</label>
-                                <input type="file" name="about_image" class="file-input mt-2"
-                                       accept="image/*">
-                                <small class="remove-image d-block mt-2">Ganti gambar</small>
-                            </div>
-                        @else
-                            <div class="image-item">
-                                <label>Unggah Gambar About</label>
-                                <input type="file" name="about_image" class="file-input mt-2"
-                                       accept="image/*">
-                                <label class="file-input-label mt-2 d-inline-block">Pilih File Gambar</label>
-                            </div>
-                        @endif
+                        <div class="image-item">
+                            <img id="preview_about_image"
+                                 src="{{ $profile?->about_image ? asset('storage/'.$profile->about_image) : 'https://placehold.co/300x150?text=Belum+Ada+Gambar' }}"
+                                 alt="About" class="image-preview">
+                            <span class="caption-label">{{ $profile?->about_image ? 'Gambar About Saat Ini' : 'Unggah Gambar About' }}</span>
+                            <input type="file" id="input_about_image" name="about_image" class="file-input"
+                                   accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewImage(this, 'preview_about_image')">
+                            <label for="input_about_image" class="file-input-label mt-1">
+                                {{ $profile?->about_image ? 'Ganti Gambar' : 'Pilih File Gambar' }}
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- INFORMASI KONTAK -->
         <div class="form-section">
             <h5 class="form-section-title">
@@ -331,7 +281,7 @@
 
         <!-- TOMBOL SIMPAN -->
         <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-maroon px-4">
+            <button type="submit" id="btn-submit" class="btn btn-maroon px-4">
                 <i class="bi bi-save me-2"></i>
                 Simpan Perubahan
             </button>
@@ -342,3 +292,106 @@
     </form>
 
 @endsection
+
+@push('scripts')
+<script>
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            // Cek ukuran file maksimal 2MB (2 * 1024 * 1024 bytes) sebelum upload
+            if (input.files[0].size > 2097152) {
+                alert('Ukuran gambar maksimal 2MB!');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById(previewId).src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    document.getElementById('organization-profile-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const form = this;
+        const submitBtn = document.getElementById('btn-submit');
+        const alertContainer = document.getElementById('ajax-alert-container');
+        const originalBtnHtml = submitBtn.innerHTML;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Menyimpan...`;
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: formData
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textError = await response.text();
+                console.error('Non-JSON response:', textError);
+                throw new Error(`HTTP Status ${response.status} - Cek Console (F12) untuk detail.`);
+            }
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                if (data.images) {
+                    if (data.images.logo_path) document.getElementById('preview_logo_path').src = data.images.logo_path;
+                    if (data.images.hero_image) document.getElementById('preview_hero_image').src = data.images.hero_image;
+                    if (data.images.about_image) document.getElementById('preview_about_image').src = data.images.about_image;
+                }
+
+                form.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+            } else {
+                let errorList = '';
+                if (data.errors) {
+                    Object.values(data.errors).forEach(errArr => {
+                        errArr.forEach(msg => errorList += `<li>${msg}</li>`);
+                    });
+                } else {
+                    errorList = `<li>${data.message || 'Gagal menyimpan data.'}</li>`;
+                }
+
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <ul class="mb-0">${errorList}</ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (error) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error:</strong> ${error.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    });
+</script>
+@endpush
