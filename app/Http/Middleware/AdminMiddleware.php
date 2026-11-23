@@ -19,7 +19,8 @@ class AdminMiddleware
         }
 
         // Memastikan pengguna adalah administrator
-        if (!auth()->user()->is_admin) {
+        $user = auth()->user();
+        if (!$user->is_admin && !$user->hasAnyRole(['super-admin', 'admin', 'editor'])) {
             abort(403, 'Anda tidak memiliki akses administrator.');
         }
 

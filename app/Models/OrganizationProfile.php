@@ -16,6 +16,8 @@ class OrganizationProfile extends Model
         'about_title',
         'about_description',
         'about_image',
+        'vision',
+        'mission',
         'email',
         'phone',
         'address',

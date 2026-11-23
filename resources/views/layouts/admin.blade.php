@@ -758,6 +758,18 @@
                 <span>Divisi</span>
 
             </a>
+            <!-- JABATAN -->
+            <a href="{{ route('admin.positions.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.positions.*') ? 'active' : '' }}">
+                <i class="bi bi-diagram-3"></i>
+                <span>Jabatan</span>
+            </a>
+            <!-- KATEGORI PROGRAM -->
+            <a href="{{ route('admin.program-categories.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.program-categories.*') ? 'active' : '' }}">
+                <i class="bi bi-tags"></i>
+                <span>Kategori Program</span>
+            </a>
             <!-- ANGGOTA KEPEENGURUSAN -->
 
             <a
@@ -770,6 +782,12 @@
                 <span>Anggota Kepengurusan</span>
 
             </a>
+            <!-- PESAN KONTAK -->
+            <a href="{{ route('admin.contact-messages.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.contact-messages.*') ? 'active' : '' }}">
+                <i class="bi bi-envelope"></i>
+                <span>Pesan Kontak</span>
+            </a>
             <!-- BERITA -->
 
             <a
@@ -781,6 +799,24 @@
 
                 <span>Berita &amp; Artikel</span>
 
+            </a>
+            <!-- TAG -->
+            <a href="{{ route('admin.tags.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.tags.*') ? 'active' : '' }}">
+                <i class="bi bi-tags"></i>
+                <span>Tag Konten</span>
+            </a>
+            <!-- PENGGUNA -->
+            <a href="{{ route('admin.users.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <i class="bi bi-person-gear"></i>
+                <span>Pengguna & Role</span>
+            </a>
+            <!-- AUDIT LOG -->
+            <a href="{{ route('admin.activity-logs.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
+                <i class="bi bi-journal-check"></i>
+                <span>Audit Log</span>
             </a>
             <!-- PROFIL ORGANISASI -->
 

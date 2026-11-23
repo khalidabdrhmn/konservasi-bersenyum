@@ -19,6 +19,15 @@ use Illuminate\Support\Facades\Response;
 use App\Models\Program;
 use App\Models\Gallery;
 use App\Models\Post;
+use App\Http\Controllers\Admin\PositionController;
+use App\Http\Controllers\Admin\ProgramCategoryController;
+use App\Http\Controllers\Admin\MemberAssignmentController;
+use App\Http\Controllers\Admin\GalleryItemController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\Admin\ActivityLogController;
 
 // ===================================
 // ROUTE FRONTEND
@@ -50,6 +59,13 @@ Route::get('/berita', [FrontendPostController::class, 'index'])
 
 Route::get('/berita/{post:slug}', [FrontendPostController::class, 'show'])
     ->name('frontend.posts.show');
+
+Route::get('/kontak', [ContactController::class, 'index'])
+    ->name('frontend.contact');
+
+Route::post('/kontak', [ContactController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('frontend.contact.store');
 
 
 // ===================================
@@ -236,6 +252,42 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])
         ->name('posts.destroy');
 
+    // Jabatan dan kategori
+    Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');
+    Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
+    Route::put('/positions/{position}', [PositionController::class, 'update'])->name('positions.update');
+    Route::delete('/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
+
+    Route::get('/program-categories', [ProgramCategoryController::class, 'index'])->name('program-categories.index');
+    Route::post('/program-categories', [ProgramCategoryController::class, 'store'])->name('program-categories.store');
+    Route::put('/program-categories/{programCategory}', [ProgramCategoryController::class, 'update'])->name('program-categories.update');
+    Route::delete('/program-categories/{programCategory}', [ProgramCategoryController::class, 'destroy'])->name('program-categories.destroy');
+
+    // Riwayat penugasan anggota
+    Route::get('/members/{member}/assignments', [MemberAssignmentController::class, 'index'])->name('members.assignments.index');
+    Route::post('/members/{member}/assignments', [MemberAssignmentController::class, 'store'])->name('members.assignments.store');
+    Route::delete('/members/{member}/assignments/{assignment}', [MemberAssignmentController::class, 'destroy'])->name('members.assignments.destroy');
+
+    // Item media di dalam album
+    Route::get('/galleries/{gallery}/items', [GalleryItemController::class, 'index'])->name('galleries.items.index');
+    Route::post('/galleries/{gallery}/items', [GalleryItemController::class, 'store'])->name('galleries.items.store');
+    Route::delete('/galleries/{gallery}/items/{item}', [GalleryItemController::class, 'destroy'])->name('galleries.items.destroy');
+
+    // Pesan kontak
+    Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::put('/contact-messages/{contactMessage}', [ContactMessageController::class, 'update'])->name('contact-messages.update');
+    Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+    Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
+
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     // Profil Organisasi
  // Profil Organisasi

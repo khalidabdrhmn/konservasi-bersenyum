@@ -5,6 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
 use App\Models\Gallery;
+use App\Models\Post;
+use App\Models\Member;
+use App\Models\ManagementPeriod;
+use App\Models\Position;
+use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -45,6 +50,12 @@ class DashboardController extends Controller
             'draft'
         )->count();
 
+        $totalPosts = Post::count();
+        $totalMembers = Member::count();
+        $totalPeriods = ManagementPeriod::count();
+        $totalPositions = Position::count();
+        $newMessages = ContactMessage::where('status', 'new')->count();
+
 
         // Program terbaru
         $latestPrograms = Program::latest()
@@ -82,6 +93,11 @@ class DashboardController extends Controller
                 'total_galleries' => $totalGalleries,
                 'published_galleries' => $publishedGalleries,
                 'draft_galleries' => $draftGalleries,
+                'total_posts' => $totalPosts,
+                'total_members' => $totalMembers,
+                'total_periods' => $totalPeriods,
+                'total_positions' => $totalPositions,
+                'new_messages' => $newMessages,
             ],
 
             'latest_programs' => $latestPrograms,

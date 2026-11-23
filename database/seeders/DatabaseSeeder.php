@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             DivisionSeeder::class,
             MemberSeeder::class,
             PostSeeder::class,
+            TargetDataSeeder::class,
         ]);
     }
 }

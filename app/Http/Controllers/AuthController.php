@@ -39,7 +39,8 @@ class AuthController extends Controller
         }
 
         // Memeriksa hak akses administrator
-        if (!Auth::user()->is_admin) {
+        $user = Auth::user();
+        if (!$user->is_admin && !$user->hasAnyRole(['super-admin', 'admin', 'editor'])) {
             Auth::logout();
 
             $request->session()->invalidate();

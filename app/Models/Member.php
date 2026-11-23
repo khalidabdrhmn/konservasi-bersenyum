@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
@@ -15,6 +16,13 @@ class Member extends Model
         'management_period_id',
         'division_id',
         'name',
+        'full_name',
+        'display_name',
+        'student_id',
+        'study_program',
+        'university',
+        'cohort_year',
+        'is_public',
         'position',
         'slug',
         'bio',
@@ -29,6 +37,8 @@ class Member extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_public' => 'boolean',
+        'cohort_year' => 'integer',
     ];
 
     /**
@@ -53,5 +63,10 @@ class Member extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(MemberAssignment::class);
     }
 }

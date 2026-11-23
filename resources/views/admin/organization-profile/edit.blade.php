@@ -188,6 +188,14 @@
                               class="form-control"
                               placeholder="Masukkan deskripsi organisasi...">{{ old('about_description', $profile?->about_description ?? '') }}</textarea>
                 </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Visi</label>
+                    <textarea name="vision" rows="4" class="form-control">{{ old('vision', $profile?->vision ?? '') }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Misi</label>
+                    <textarea name="mission" rows="4" class="form-control">{{ old('mission', $profile?->mission ?? '') }}</textarea>
+                </div>
                 <div class="col-12">
                     <label class="form-label fw-semibold">Gambar Tentang Kami</label>
                     <div class="image-grid">

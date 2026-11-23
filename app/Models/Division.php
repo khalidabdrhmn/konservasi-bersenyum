@@ -13,9 +13,11 @@ class Division extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'management_period_id',
         'name',
         'slug',
         'description',
+        'sort_order',
         'user_id',
     ];
 
@@ -33,5 +35,15 @@ class Division extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(ManagementPeriod::class, 'management_period_id');
+    }
+
+    public function positions(): HasMany
+    {
+        return $this->hasMany(Position::class);
     }
 }

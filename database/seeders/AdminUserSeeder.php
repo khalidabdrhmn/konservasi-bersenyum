@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AdminUserSeeder extends Seeder
 {
@@ -35,6 +37,22 @@ class AdminUserSeeder extends Seeder
             'name' => config('admin.name', 'Administrator'),
             'is_admin' => true,
         ])->save();
+
+        $permissions = [
+            'dashboard.view',
+            'periods.manage', 'divisions.manage', 'positions.manage',
+            'members.manage', 'assignments.manage',
+            'programs.manage', 'program-categories.manage',
+            'galleries.manage', 'gallery-items.manage',
+            'posts.manage', 'tags.manage',
+            'messages.manage', 'profile.manage', 'users.manage',
+        ];
+        foreach ($permissions as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+        $superAdmin = Role::findOrCreate('super-admin', 'web');
+        $superAdmin->syncPermissions($permissions);
+        $admin->syncRoles([$superAdmin]);
 
         $this->command->info(
             'Akun administrator berhasil disiapkan.'

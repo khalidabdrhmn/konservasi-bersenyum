@@ -14,9 +14,11 @@ class ManagementPeriod extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'start_date',
         'end_date',
         'is_active',
+        'status',
         'description',
         'user_id',
     ];
@@ -41,5 +43,15 @@ class ManagementPeriod extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function divisions(): HasMany
+    {
+        return $this->hasMany(Division::class);
+    }
+
+    public function positions(): HasMany
+    {
+        return $this->hasMany(Position::class);
     }
 }

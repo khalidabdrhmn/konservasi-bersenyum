@@ -325,6 +325,13 @@
                         Berita
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('frontend.contact*') ? 'active' : '' }}"
+                       href="{{ route('frontend.contact') }}">
+                        Kontak
+                    </a>
+                </li>
             </ul>
 
         </div>
@@ -360,6 +367,7 @@
                 <p><a href="{{ route('frontend.galleries') }}">Galeri</a></p>
                 <p><a href="{{ route('frontend.kepengurusan') }}">Kepengurusan</a></p>
                 <p><a href="{{ route('frontend.posts') }}">Berita</a></p>
+                <p><a href="{{ route('frontend.contact') }}">Kontak</a></p>
             </div>
 
             <div class="col-md-4">
