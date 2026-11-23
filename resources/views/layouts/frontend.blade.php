@@ -300,6 +300,19 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('frontend.programs*') ? 'active' : '' }}"
+                       href="{{ route('frontend.programs') }}">
+                        Program
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('frontend.galleries*') ? 'active' : '' }}"
+                       href="{{ route('frontend.galleries') }}">
+                        Galeri
+                    </a>
+                </li>
             </ul>
 
         </div>

@@ -734,6 +734,20 @@
 
                 <span>Galeri</span>
             </a>
+            <!-- PROFIL ORGANISASI -->
+
+            <a
+                href="{{ route('admin.organization-profile.edit') }}"
+                class="sidebar-link {{ request()->routeIs('admin.organization-profile.*') ? 'active' : '' }}"
+            >
+
+                <i class="bi bi-building"></i>
+
+                <span>Profil Organisasi</span>
+
+            </a>
+
+
 
         </nav>
 

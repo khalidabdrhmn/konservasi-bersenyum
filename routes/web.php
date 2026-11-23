@@ -133,6 +133,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Hapus Galeri
     Route::delete('/galleries/{gallery}', [GalleryController::class, 'destroy'])
         ->name('galleries.destroy');
+
+
+    // Profil Organisasi
+    Route::get('/organization-profile', [
+        \App\Http\Controllers\Admin\OrganizationProfileController::class,
+        'edit'
+    ])->name('organization-profile.edit');
+
+    Route::put('/organization-profile', [
+        \App\Http\Controllers\Admin\OrganizationProfileController::class,
+        'update'
+    ])->name('organization-profile.update');
 });
 
 Route::get('/sitemap.xml', function () {

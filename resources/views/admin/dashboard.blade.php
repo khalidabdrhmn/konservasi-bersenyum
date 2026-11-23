@@ -500,7 +500,7 @@
             <i class="bi bi-check-circle-fill text-success"></i>
 
             <small>
-                Dashboard terhubung dengan database MySQL.
+                Dashboard terhubung dengan database {{ strtoupper(config('database.default')) }}.
             </small>
 
         </div>
