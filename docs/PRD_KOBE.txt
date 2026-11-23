@@ -1,0 +1,152 @@
+PRODUCT REQUIREMENTS DOCUMENT
+Konservasi Bersenyum (KOBE)
+
+Atribut	Nilai
+Dokumen	KOBE-PRD-001
+Versi	1.0
+Tanggal	24 November 2026
+Pemilik	Tim Pengembang & Pengurus KOBE
+Status	Draft untuk persetujuan
+Teknologi	Laravel 12, PHP 8.2+, MySQL/MariaDB
+Sumber	Desain_Database_KOBE_dengan_Flowchart.xlsx dan migrasi repository
+
+
+# 1. Ringkasan Eksekutif
+
+Dokumen ini menetapkan kebutuhan produk untuk modernisasi website dan dashboard admin Konservasi Bersenyum agar mendukung pergantian kepengurusan, arsip organisasi, publikasi konten, dokumentasi kegiatan, dan pengelolaan anggota.
+
+Aspek	Ketentuan
+Produk	Website publik dan dashboard admin KOBE
+Pengguna utama	Pengunjung publik, admin/pengurus, dan super-admin
+Baseline teknis	Laravel 12, PHP 8.2+, Spatie Laravel Permission
+Tujuan utama	Memisahkan identitas, struktur periode, konten, dan hak akses
+Strategi implementasi	Migrasi bertahap dengan backup, staging, cutover, dan rollback
+
+
+# 2. Tujuan Bisnis dan Masalah
+
+- Memastikan data kepengurusan lama tidak tercampur dengan periode aktif.
+- Memungkinkan satu anggota memiliki riwayat jabatan lintas periode.
+- Mengelola program, berita, pengumuman, dan galeri sebagai konten terstruktur.
+- Menjaga privasi data anggota serta menerapkan hak akses berdasarkan peran.
+- Menyediakan arsip historis yang dapat dipulihkan dan ditelusuri.
+
+# 3. Pengguna dan Skenario
+
+
+Persona	Kebutuhan	Skenario inti
+Pengunjung publik	Menemukan informasi organisasi dan arsip	Melihat profil, kepengurusan, program, artikel, dan galeri publik
+Editor	Mengelola konten yang ditugaskan	Membuat, mengubah, menjadwalkan, dan mempublikasikan konten
+Admin	Mengelola operasional organisasi	Mengelola periode, divisi, jabatan, anggota, program, dan media
+Super-admin	Mengelola pengguna dan hak akses	Mengubah role/permission dan mengawasi aktivitas penting
+
+
+# 4. Ruang Lingkup
+
+
+## 4.1 Dalam Cakupan
+
+- Profil organisasi lintas periode.
+- Periode kepengurusan, divisi, jabatan, anggota, dan riwayat penugasan.
+- Kategori dan program kerja beserta status pelaksanaan dan publikasi.
+- Album galeri serta foto, video, dan dokumen.
+- Berita, artikel, pengumuman, tag, dan konten unggulan.
+- Autentikasi admin, role/permission Spatie, formulir kontak, dan audit log opsional.
+
+## 4.2 Di Luar Cakupan
+
+- Sistem keuangan dan akuntansi.
+- Presensi anggota.
+- Pendaftaran dan rekrutmen anggota.
+- Inventaris organisasi.
+- Lokalisasi/bilingual pada fase inti.
+
+# 5. Kebutuhan Fungsional
+
+
+ID	Fitur	Aktor	Penerimaan
+FR-01	Membuat dan mengarsipkan periode kepengurusan	Admin/Super-admin	Maksimal satu periode berstatus active; periode lama tidak dihapus
+FR-02	Mengelola divisi dan jabatan per periode	Admin	Divisi dan jabatan tidak boleh tercampur lintas periode
+FR-03	Mengelola identitas dan riwayat anggota	Admin	Satu anggota dapat memiliki beberapa penugasan lintas periode
+FR-04	Mengelola kategori dan program kerja	Admin/Editor	Publication dan implementation status dipisahkan
+FR-05	Mengelola album dan media kegiatan	Admin/Editor	Satu album mendukung banyak item media
+FR-06	Mengelola berita, artikel, dan pengumuman	Editor/Admin	Konten memakai post_type dan publication_status
+FR-07	Menerapkan role dan permission	Super-admin	Spatie menjadi sumber otorisasi utama
+FR-08	Menerima dan menangani pesan kontak	Admin	Pesan dapat divalidasi, dibatasi laju, dan ditangani admin
+FR-09	Mencatat aktivitas penting	Sistem	Log tidak boleh berisi password, token, atau secret
+
+
+# 6. Aturan Bisnis
+
+- Periode memiliki status draft, active, completed, atau archived.
+- Hanya satu periode boleh berstatus active pada satu waktu.
+- Slug divisi dan jabatan unik dalam satu periode.
+- Slug program dan slug konten global harus unik.
+- Status publikasi program hanya draft/published dan status pelaksanaan planned/ongoing/completed/cancelled.
+- Konten published wajib memiliki published_at.
+- Member assignment tidak boleh duplikasi pada pasangan member dan position.
+- NIM, email pribadi, dan nomor telepon tidak ditampilkan publik kecuali izin eksplisit.
+
+# 7. Pengalaman Pengguna
+
+
+Modul	Prinsip tampilan
+Halaman publik	Informasi mudah dibaca, responsif, dan menunjukkan periode yang relevan
+Struktur organisasi	Dikelompokkan berdasarkan periode, divisi, jabatan, dan urutan tampilan
+Dashboard	CRUD jelas; field sensitif dibatasi; konfirmasi sebelum publish, archive, dan delete
+Upload media	Validasi tipe dan ukuran, preview thumbnail, serta urutan yang dapat diatur
+
+
+# 8. Persyaratan Non-Fungsional
+
+
+Kategori	Target
+Performa	Halaman daftar publik dan arsip yang umum harus merender tanpa loading berlebihan; gunakan eager loading dan index
+Keamanan	Autentikasi Laravel, CSRF, validasi server, authorization, proteksi upload, dan rate limiting
+Privasi	Pembatasan field sensitif; logging tidak menyimpan rahasia
+Keandalan	Backup tervalidasi, migrasi dalam staging, cutover bertahap, dan prosedur rollback
+Portabilitas	Mendukung MySQL/MariaDB; jangan bergantung pada fitur vendor yang tidak didukung
+Kemudahan pemeliharaan	Kode mengikuti pola Laravel, migration terpisah, dan seeder role/permission versi terkontrol
+
+
+# 9. Metrik Keberhasilan
+
+- 0 data periode aktif ganda.
+- 100% foreign key utama tervalidasi pada staging.
+- 0 kebocoran field sensitif pada halaman publik.
+- 100% alur CRUD inti lulus regression test.
+- Migrasi dapat dijalankan ulang pada database staging tanpa kehilangan relasi.
+- Restore backup berhasil pada staging sebelum cutover.
+
+# 10. Migrasi dan Rilis
+
+
+Tahap	Pekerjaan	Kriteria selesai
+0	Backup dan audit dependensi	Backup tersedia, dipulihkan, dan dependensi tercatat
+1	Fondasi periode dan struktur	Period, division, dan position target aktif
+2	Normalisasi anggota	Members dan member_assignments tervalidasi
+3	Program kerja	Kategori dan status terpisah
+4	Galeri album	Media lama menjadi album dan gallery_items
+5	Konten dan admin	Posts serta Spatie permission berfungsi
+6	Cutover	Regression lulus dan monitoring aktif
+
+
+# 11. Risiko dan Mitigasi
+
+
+Risiko	Dampak	Mitigasi
+Data lama tidak memiliki periode	Relasi salah atau hilang	Jangan menebak; tandai untuk verifikasi manual dan gunakan nullable sementara
+Nama anggota sama atau NIM tidak tersedia	Duplikasi orang	Cocokkan manual dan verifikasi identitas sebelum migrasi
+Lock akun admin saat konversi role	Admin kehilangan akses	Pastikan role super-admin terbentuk dan diuji sebelum menghapus is_admin
+Path media berubah	Foto lama rusak	Pertahankan path lama dan migrasi storage beserta record
+Migration gagal saat produksi	Downtime	Backup, staging rehearsal, transaksi, deploy bertahap, dan rollback plan
+
+
+# 12. Kriteria Penerimaan
+
+- Semua kebutuhan FR memiliki bukti pengujian yang lulus.
+- Arsip periode lama tetap dapat dibuka dan tidak dapat tercampur dengan periode aktif.
+- Hak akses admin, editor, dan super-admin sesuai role.
+- CRUD anggota lintas periode dan multi-jabatan berfungsi.
+- Upload media, publikasi konten, dan form kontak berfungsi.
+- Backup dan restore tervalidasi; rollback dapat dijalankan.

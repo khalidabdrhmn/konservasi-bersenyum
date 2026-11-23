@@ -1,0 +1,240 @@
+TECHNICAL DESIGN DOCUMENT
+Konservasi Bersenyum (KOBE)
+
+Atribut	Nilai
+Dokumen	KOBE-TDD-001
+Versi	1.0
+Tanggal	24 November 2026
+Pemilik	Tim Pengembang & Pengurus KOBE
+Status	Draft untuk persetujuan
+Teknologi	Laravel 12, PHP 8.2+, MySQL/MariaDB
+Sumber	Desain_Database_KOBE_dengan_Flowchart.xlsx dan migrasi repository
+
+
+# 1. Tujuan dan Status Rancangan
+
+Dokumen ini menerjemahkan PRD dan rancangan Excel menjadi spesifikasi teknis implementasi Laravel 12. Rancangan memperbarui migration yang sudah ada, bukan melakukan perubahan database langsung.
+
+# 2. Kondisi Repository Saat Ini
+
+
+Area	Temuan
+Framework	Laravel 12 dan PHP ^8.2
+Otorisasi	spatie/laravel-permission ^6.25 serta migration permission Spatie
+Tabel inti existing	users, organization_profiles, management_periods, divisions, members, programs, galleries, posts
+Status existing	Management periods memakai is_active; members masih mencampur identitas dan jabatan
+Infrastructure	cache, jobs, dan sessions tersedia dan tidak termasuk redesign modul bisnis
+
+
+# 3. Arsitektur Target
+
+
+## 3.1 Modul Database
+
+- Core: organization_profiles, users, management_periods.
+- Organisasi: divisions, positions, members, member_assignments.
+- Program: program_categories, programs.
+- Media: galleries, gallery_items.
+- Konten: posts, tags, post_tag.
+- Operasional: contact_messages, activity_logs.
+- Otorisasi: roles, permissions, model_has_roles, model_has_permissions, role_has_permissions.
+
+## 3.2 Relasi Utama
+
+- management_periods 1:N divisions, positions, programs, galleries, dan posts secara opsional.
+- divisions 1:N positions.
+- positions dapat memiliki parent_position_id untuk hierarki.
+- members 1:N member_assignments; positions 1:N member_assignments.
+- program_categories 1:N programs.
+- galleries 1:N gallery_items.
+- posts M:N tags melalui post_tag.
+
+# 4. Data Model dan Constraint
+
+
+## 4.1 Periode dan Struktur
+
+
+Tabel	Kolom penting	Constraint
+management_periods	name, slug, start_date, end_date, status, created_by	slug unique; satu active; end_date >= start_date
+divisions	management_period_id, name, slug, description, sort_order	FK restrict; slug unique per periode
+positions	management_period_id, division_id, parent_position_id, name, slug	Divisi dan periode konsisten; parent tidak membentuk siklus
+
+
+## 4.2 Anggota
+
+
+Tabel	Kolom penting	Constraint
+members	full_name, display_name, student_id, study_program, bio, photo_path, is_public	Data sensitif dibatasi; soft delete
+member_assignments	member_id, position_id, start_date, end_date, is_primary, sort_order	Unique(member_id, position_id); end_date >= start_date
+
+
+## 4.3 Program dan Galeri
+
+
+Tabel	Kolom penting	Constraint
+program_categories	name, slug, description, sort_order	slug unique
+programs	period, category, title, slug, statuses, dates, cover	slug unique; tanggal valid; status tervalidasi
+galleries	period, program, title, slug, event_date, publication_status	period/program nullable untuk legacy; tanggal valid
+gallery_items	gallery_id, media_type, file_path, thumbnail_path, caption, alt_text	cascade saat album dihapus; tipe image/video/document
+
+
+## 4.4 Konten dan Operasional
+
+
+Tabel	Kolom penting	Constraint
+posts	period, user, post_type, title, slug, content, publication_status, published_at	Slug unik; published_at wajib jika published
+tags/post_tag	name/slug; post_id/tag_id	Pivot composite key; cascade delete
+contact_messages	name, email, phone, subject, message, status, handled_by	Rate limit, validasi panjang, honeypot/CAPTCHA
+activity_logs	user_id, event, subject_type/id, properties, ip_address	Whitelist properti; never log secrets
+
+
+# 5. Nama Kolom dan Migrasi
+
+Gunakan foreignId() atau foreignIdUnsigned() sesuai kebutuhan Laravel untuk BIGINT UNSIGNED. Kolom legacy disimpan sementara bila kode lama masih bergantung, lalu dihapus setelah seluruh referensi berhenti dipakai.
+
+Tabel lama	Aksi target	Catatan migrasi
+organization_profiles	Pertahankan + tambah vision/mission	Kolom baru nullable; sinkronkan model, controller, dan view
+users.is_admin	Konversi ke Spatie role	Seed super-admin/admin berdasarkan is_admin=true
+management_periods	is_active -> status; tambah slug	Deteksi periode active ganda sebelum konversi
+divisions	Tambah management_period_id	Petakan record lama ke periode; jangan menebak
+members lama	Pisahkan members dan member_assignments	Ambil identity unik, buat position, lalu migrasikan assignment
+programs	Tambah period/category/status	Map category string dan status lama
+galleries	Album + gallery_items	Setiap record lama menjadi album dan satu item awal
+posts	Tambah period/post_type	Map tipe dan status dari konten lama
+
+
+# 6. Implementasi Laravel
+
+
+## 6.1 Pola Struktur
+
+- Gunakan Eloquent models, Form Request, Policy/Gate atau permission Spatie.
+- Gunakan database transaction untuk aktivasi periode dan operasi migrasi yang perlu konsisten.
+- Gunakan Query Builder/Model Scope untuk filter periode, status, dan published_at.
+- Gunakan Eloquent with() untuk eager loading relasi yang sering ditampilkan.
+- Gunakan storage disks untuk file media dan tidak menyimpan binary pada database.
+
+## 6.2 Route dan Authorization (contoh)
+
+
+Area	Permission contoh	Catatan
+Periode	periods.view/create/update/archive	Super-admin/admin
+Anggota	members.view/create/update/delete	Super-admin/admin
+Program	programs.view/create/update/publish	Admin/editor sesuai pembagian
+Galeri	galleries.view/create/update/upload/delete	Admin/editor
+Konten	posts.view/create/update/publish/archive	Admin/editor
+Pesan	messages.view/handle/archive	Admin/super-admin
+
+
+## 6.3 Validation Rules
+
+- management_period: status enum; unique slug; start/end date.
+- division/position: unique slug per period; valid FK ke period/division.
+- member_assignment: combination member_id-position_id unique; valid rentang tanggal.
+- program/gallery/post: unique slug; enum status; published_at required for published.
+- upload: image/video/document MIME yang diizinkan, batas ukuran, dan virus/malware scanning bila tersedia.
+
+# 7. Security dan Privasi
+
+- Seluruh dashboard memerlukan autentikasi; akses object sensitif memakai authorization.
+- Gunakan CSRF pada form, validasi server, escaping output Blade, dan prepared query.
+- Batasi public endpoint yang menampilkan members.is_public=true.
+- Jangan seed atau commit credential; password disimpan sebagai hash Laravel.
+- Rate limit form kontak dan autentikasi; tambahkan honeypot/CAPTCHA sesuai kebutuhan.
+- Log hanya properti aman; gunakan soft delete dan retensi sesuai kebijakan.
+
+# 8. Index dan Performa
+
+
+Query/objek	Index yang disarankan
+Periode	slug unique, status, start_date
+Divisi/Jabatan	unique(period_id, slug), FK period/division
+Anggota	member_id/position_id pada assignment; student_id bila diperlukan
+Program	management_period_id, program_category_id, publication_status, implementation_status
+Galeri	management_period_id, program_id, event_date, publication_status
+Konten	management_period_id, post_type, publication_status, published_at
+
+
+# 9. Strategi Migrasi
+
+
+## 9.1 Urutan Migration
+
+- Tahap 0: backup database, catat jumlah record, audit model/controller/query/view.
+- Tahap 1: tambah slug/status dan FK periode pada divisi; buat tabel positions.
+- Tahap 2: buat members target dan member_assignments; migrasi data lama.
+- Tahap 3: buat program_categories dan update programs.
+- Tahap 4: ubah galleries menjadi album dan buat gallery_items.
+- Tahap 5: update posts, seed role/permission, dan tambahkan tabel opsional.
+- Tahap 6: deploy bertahap, verifikasi, monitoring, dan cutover.
+
+## 9.2 Contoh Urutan Operasi
+
+- Schema migration additive-first: tambah kolom/tabel, jangan langsung menghapus struktur lama.
+- Backfill menggunakan migration/seeder atau command khusus yang dapat diulang.
+- Aktifkan aplikasi baru setelah model/controller/view kompatibel dengan schema baru.
+- Verifikasi record lama dan relasi, lalu hapus kolom legacy pada rilis berikutnya.
+
+## 9.3 Rollback
+
+- Sebelum cutover, buat database backup dengan timestamp dan simpan checklist restore.
+- Rollback kode dapat menurunkan versi deployment tanpa otomatis menghapus schema.
+- Jika migrasi gagal, hentikan cutover, restore staging/production dari backup, dan audit perubahan.
+- Jangan rollback dengan menghapus periode atau record yang telah memiliki data turunan.
+
+# 10. Pengujian
+
+
+## 10.1 Test Pyramid
+
+
+Jenis	Cakupan minimum
+Unit	Rule status, tanggal, slug, permission helper, service hierarchy
+Feature	CRUD semua modul, publikasi, filter periode, upload, dan authorization
+Database	FK, unique constraint, cascade, soft delete, dan migrasi legacy
+Integration	Storage, Spatie permission, form kontak, dan activity log
+End-to-end	Halaman publik, dashboard, publish/archive, dan regresi browser utama
+
+
+## 10.2 Skenario Kritis
+
+- Aktifkan periode baru: periode lama menjadi completed/archived dan hanya satu active.
+- Anggota lintas periode: satu member memiliki dua member_assignments pada periode berbeda.
+- Satu member dengan dua jabatan berbeda pada periode yang sama.
+- Program draft/published dengan planned/ongoing/completed/cancelled.
+- Album dengan beberapa item image/video/document.
+- Admin/editor/super-admin mendapat dan tidak mendapat aksi sesuai permission.
+- Member is_public=false tidak muncul pada halaman publik.
+- Delete/soft delete tidak merusak riwayat period atau album.
+
+# 11. Acceptance and Deployment Checklist
+
+- Migration dan rollback tervalidasi pada database staging.
+- Backup restore berhasil dan jumlah record dicatat.
+- Semua foreign key dan composite index lulus.
+- Tidak ada field sensitif pada halaman publik.
+- Role dan permission diuji sebelum is_admin legacy dinonaktifkan.
+- Upload storage dan path legacy tervalidasi.
+- Regression test publik dan dashboard lulus.
+- Monitoring, log error, dan mekanisme rollback aktif selama cutover.
+
+# Lampiran A - Daftar Tabel Target
+
+
+Kelompok	Tabel
+Profil & Akun	organization_profiles, users
+Organisasi	management_periods, divisions, positions, members, member_assignments
+Program	program_categories, programs
+Media	galleries, gallery_items
+Konten	posts, tags, post_tag
+Operasional	contact_messages, activity_logs
+Otorisasi	roles, permissions, model_has_roles, model_has_permissions, role_has_permissions
+Laravel	cache, jobs, sessions (dipertahankan)
+
+
+# Lampiran B - Referensi
+
+- Desain_Database_KOBE_dengan_Flowchart.xlsx
+- database/migrations/ pada repository KOBE
+- composer.json (Laravel 12, PHP 8.2+, Spatie Permission)
